@@ -81,7 +81,7 @@ class RemindersListViewModelTest {
              `is`(false)
         )
         // Data must still be present
-        assertThat(remindersListViewModel.showSnackBar.getOrAwaitValue(),
+        assertThat(remindersListViewModel.showNoData.getOrAwaitValue(),
             `is`(false)
         )
     }

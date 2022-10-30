@@ -33,10 +33,6 @@ import java.util.concurrent.TimeUnit
 private const val REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE = 33
 private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
 private const val REQUEST_TURN_DEVICE_LOCATION_ON = 29
-private const val LOCATION_PERMISSION_INDEX = 0
-private const val BACKGROUND_LOCATION_PERMISSION_INDEX = 1
-
-
 
 @RequiresApi(Build.VERSION_CODES.M)
 class SaveReminderFragment : BaseFragment() {
@@ -99,12 +95,7 @@ class SaveReminderFragment : BaseFragment() {
                 )
 
             if (_viewModel.validateEnteredData(reminderDataItem)){
-//                _viewModel.validateAndSaveReminder(
-//                    reminderDataItem
-//                )
-//                addGeofenceForClue(reminderDataItem)
                 checkPermissionsAndStartGeofencing()
-
             }
 
             }
