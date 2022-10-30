@@ -33,42 +33,35 @@ class RemindersListViewModelTest {
     var instantExecutorRule = InstantTaskExecutorRule()
     private lateinit var datasource: FakeDataSource
 
-    //TODO: provide testing to the RemindersListViewModel and its live data objects
     private lateinit var remindersListViewModel: RemindersListViewModel
-
-    val reminderData = ReminderDTO(
-        "A Reminder",
-        "The Description",
-        "Benin",
-        7.8,
-        4.8
-    )
 
     @Before
     fun setupViewModel() {
+        stopKoin()
 
-        val mutableList = mutableListOf(reminderData)
-
-        datasource = FakeDataSource(mutableList)
-
+        datasource = FakeDataSource()
 
         remindersListViewModel =
             RemindersListViewModel(ApplicationProvider.getApplicationContext(), datasource)
     }
 
+    private fun getReminder(): ReminderDTO {
+        return ReminderDTO(
+            title = "A Reminder",
+            description = "The Description",
+            location = "Benin",
+            latitude = 7.8,
+            longitude = 4.8)
+    }
 
     @Test
     fun check_loading()  = runTest{
+        datasource.deleteAllReminders()
+        val reminder = getReminder()
+        datasource.saveReminder(reminder)
+
         // Main dispatcher will not run coroutines eagerly for this test
         Dispatchers.setMain(StandardTestDispatcher())
-
-        // When loading a new reminder
-        val mutableList = mutableListOf(reminderData)
-
-        datasource = FakeDataSource(mutableList)
-
-        remindersListViewModel =
-            RemindersListViewModel(ApplicationProvider.getApplicationContext(), datasource)
 
         remindersListViewModel.loadReminders()
 
@@ -87,28 +80,29 @@ class RemindersListViewModelTest {
         assertThat(remindersListViewModel.showLoading.getOrAwaitValue(),
              `is`(false)
         )
+        // Data must still be present
+        assertThat(remindersListViewModel.showSnackBar.getOrAwaitValue(),
+            `is`(false)
+        )
     }
 
     @Test
-    fun shouldReturnError() {
-        datasource = FakeDataSource(null)
-        remindersListViewModel =
-            RemindersListViewModel(ApplicationProvider.getApplicationContext(), datasource)
+    fun loadRemindersEmptyList() = runBlockingTest {
+        datasource.deleteAllReminders()
+        remindersListViewModel.loadReminders()
+        assertThat(remindersListViewModel.showNoData.getOrAwaitValue(), `is`(true))
+    }
 
+    @Test
+    fun shouldReturnError() = runBlockingTest{
         datasource.setReturnError(true)
         remindersListViewModel.loadReminders()
-//        val value = remindersListViewModel.showSnackBar.getOrAwaitValue()
         val value = remindersListViewModel.showSnackBar.getOrAwaitValue()
-
-
-        assertThat(
-            value, `is`("ERROR")
-        )
+        assertThat(value, `is`("Reminders not found"))
     }
 
     @After
     fun tearDown() {
         stopKoin()
     }
-
 }

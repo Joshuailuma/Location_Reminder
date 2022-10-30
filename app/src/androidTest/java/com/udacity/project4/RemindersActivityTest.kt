@@ -24,31 +24,19 @@ import com.udacity.project4.locationreminders.reminderslist.RemindersListViewMod
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.util.DataBindingIdlingResource
 import com.udacity.project4.util.monitorActivity
-import com.udacity.project4.utils.EspressoIdlingResource
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import org.hamcrest.CoreMatchers
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.not
 import org.junit.After
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.androidx.viewmodel.dsl.viewModel
-import org.koin.core.context.GlobalContext
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 import org.koin.test.AutoCloseKoinTest
-import org.koin.test.get
-import org.koin.androidx.viewmodel.dsl.viewModel
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import org.koin.test.get
 import org.koin.test.inject
-import org.mockito.Mockito.mock
 
 @RunWith(AndroidJUnit4::class)
 @LargeTest
@@ -123,8 +111,6 @@ class RemindersActivityTest :
     @Test
     fun saveReminderTest_showSnackBarTitleError(): Unit = runBlocking {
         Log.i("KOIN", "Starting saveReminderTest_showSnackBarTitleError")
-
-
         val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
         dataBindingIdlingResource.monitorActivity(activityScenario)
         onView(withId(R.id.addReminderFAB)).perform(click())
@@ -158,40 +144,48 @@ class RemindersActivityTest :
 
         activityScenario.close()
         Log.i("KOIN", "Done with saveReminderTest_showSnackBarLocationError")
-
     }
-    // SHow toast when a reminder is saved
+
+    // Show toast when a reminder is saved
     @Test
+
     fun saveReminderShowToast(): Unit = runBlocking{
-        Log.i("KOIN", "Starting saveReminderShowToast")
-        // Start up Reminders activity screen.
-        val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
-        //  after you launch the activity scenario, you use monitorActivity to associate the activity with the dataBindingIdlingResource
-        dataBindingIdlingResource.monitorActivity(activityScenario)
-        val activity = getActivity(activityScenario)
+        // Espresso Toast test doesn't work on Android 11 and above. Please test on Android 10 and below
 
-        onView(withId(R.id.noDataTextView)).check(matches(isDisplayed()))
-        onView(withId(R.id.addReminderFAB)).perform(click())
-        onView(withId(R.id.reminderTitle)).perform(replaceText("A Reminder"))
-        onView(withId(R.id.reminderDescription)).perform(replaceText("The Description"))
-        onView(withId(R.id.selectLocation)).perform(click())
-        // My network is pretty slow
-        Thread.sleep(8000)
-        onView(withId(R.id.map)).perform(longClick())
-        onView(withId(R.id.saveReminder)).perform(click())
-        onView(withText(R.string.reminder_saved))
-            .inRoot(RootMatchers.withDecorView(not(
-                `is`(
-                    activity!!.window.decorView
+        if (android.os.Build.VERSION.SDK_INT <= 29){
+
+            Log.i("KOIN", "Starting saveReminderShowToast")
+            // Start up Reminders activity screen.
+            val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
+            //  after you launch the activity scenario, you use monitorActivity to associate the activity with the dataBindingIdlingResource
+            dataBindingIdlingResource.monitorActivity(activityScenario)
+            val activity = getActivity(activityScenario)
+
+            onView(withId(R.id.noDataTextView)).check(matches(isDisplayed()))
+            onView(withId(R.id.addReminderFAB)).perform(click())
+            onView(withId(R.id.reminderTitle)).perform(replaceText("A Reminder"))
+            onView(withId(R.id.reminderDescription)).perform(replaceText("The Description"))
+            onView(withId(R.id.selectLocation)).perform(click())
+            // My network is pretty slow
+            Thread.sleep(8000)
+            onView(withId(R.id.map)).perform(longClick())
+            onView(withId(R.id.saveReminder)).perform(click())
+            onView(withText(R.string.reminder_saved))
+                .inRoot(RootMatchers.withDecorView(not(
+                    `is`(
+                        activity!!.window.decorView
+                    )
+                ))).check(
+                    matches(isDisplayed())
                 )
-            ))).check(
-                matches(isDisplayed())
-            )
 
-        activityScenario.close()
-        Log.i("KOIN", "Done with saveReminderShowToast")
-    }
-
+            activityScenario.close()
+            Log.i("KOIN", "Done with saveReminderShowToast")
+        }
+        else{
+            Log.i("KOIN", "Cant Test for Toast because of your android version")
+        }
+        }
 }
 
 

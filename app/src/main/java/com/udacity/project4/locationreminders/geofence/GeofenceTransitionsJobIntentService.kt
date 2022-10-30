@@ -69,10 +69,6 @@ class GeofenceTransitionsJobIntentService : JobIntentService(), CoroutineScope {
 
             if (requestId.isEmpty()) return
 
-            // referesh repo
-//        Log.i(TAG, "$repo The reopsitory launched")
-
-
 //        Interaction to the repository has to be through a coroutine scope
             CoroutineScope(coroutineContext).launch(SupervisorJob()) {
                 val result = remindersLocalRepository.getReminder(requestId)
