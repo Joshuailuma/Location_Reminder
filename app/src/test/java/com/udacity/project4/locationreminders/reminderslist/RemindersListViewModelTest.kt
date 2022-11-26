@@ -98,7 +98,7 @@ class RemindersListViewModelTest {
         datasource.setReturnError(true)
         remindersListViewModel.loadReminders()
         val value = remindersListViewModel.showSnackBar.getOrAwaitValue()
-        assertThat(value, `is`("Reminders not found"))
+        assertThat(value, `is`("Reminders were unable to get retrieved"))
     }
 
     @After

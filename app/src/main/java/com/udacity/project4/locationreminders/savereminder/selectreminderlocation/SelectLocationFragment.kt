@@ -32,7 +32,7 @@ import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.ext.android.inject
 
 
-class SelectLocationFragment : BaseFragment(), ActivityCompat.OnRequestPermissionsResultCallback{
+class SelectLocationFragment : BaseFragment(), ActivityCompat.OnRequestPermissionsResultCallback {
 
     //Use Koin to get the view model of the SaveReminder
     override val _viewModel: SaveReminderViewModel by inject()
@@ -76,13 +76,9 @@ class SelectLocationFragment : BaseFragment(), ActivityCompat.OnRequestPermissio
 
         fusedLocationProvider = LocationServices.getFusedLocationProviderClient(this.requireActivity())
 
-        checkLocationPermission()
-
         locationSelected()
         return binding.root
     }
-
-
 
     private fun locationSelected(){
 
@@ -111,20 +107,21 @@ class SelectLocationFragment : BaseFragment(), ActivityCompat.OnRequestPermissio
 
   private val mapCallback =  OnMapReadyCallback{ googleMap->
         map = googleMap
-      cameraPosition = CameraPosition.Builder()
-          .target(LatLng(latitude, longitude))
-          .zoom(15f)
-          .build()
-      map.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
 
+      if (isPermissionGranted()) {
+          Log.i("Location", "Permission granted before, getting logitude")
+          getLastKnownLocation()
+      } else {
+          Log.i("Location", "About to request permission")
+
+          checkLocationPermission()
+      }
       setMapLongClick(map)
         // Set point of interest
         setPoiClick(map)
         // Add style
         setMapStyle(map)
-        // Get user location
     }
-
 
     private fun setMapLongClick(map: GoogleMap) {
         map.setOnMapLongClickListener {
@@ -199,17 +196,11 @@ class SelectLocationFragment : BaseFragment(), ActivityCompat.OnRequestPermissio
             )
         }
     }
-
-    override fun onPause() {
-        super.onPause()
-        if (ContextCompat.checkSelfPermission(
-                this.requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION
-            )
-            == PackageManager.PERMISSION_GRANTED
-        ) {
-            fusedLocationProvider?.removeLocationUpdates(locationCallback)
-        }
+    private fun isPermissionGranted(): Boolean {
+        return ActivityCompat.checkSelfPermission(
+            requireContext(),
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
     }
 
     private fun checkLocationPermission() {
@@ -242,9 +233,6 @@ class SelectLocationFragment : BaseFragment(), ActivityCompat.OnRequestPermissio
                 requestLocationPermission()
             }
         }
-        else {
-            Toast.makeText(this.requireContext(), R.string.location_required_error, Toast.LENGTH_LONG).show()
-        }
     }
 
 
@@ -264,6 +252,7 @@ class SelectLocationFragment : BaseFragment(), ActivityCompat.OnRequestPermissio
                 val location = locationList.last()
                 latitude =  location.latitude
                 longitude = location.longitude
+//                Log.i("Location", "New location from locationCallback is $longitude  $latitude")
 
                  cameraPosition = CameraPosition.Builder()
                     .target(LatLng(latitude, longitude))
@@ -275,6 +264,34 @@ class SelectLocationFragment : BaseFragment(), ActivityCompat.OnRequestPermissio
         }
     }
 
+    private fun getLastKnownLocation() {
+        // Getting last location
+
+        Log.i("Location", "Permission granted getting user location")
+        map.isMyLocationEnabled = true
+
+        fusedLocationProvider!!.lastLocation
+            .addOnSuccessListener { location ->
+                // If request is successful and location is not null
+                if (location != null) {
+                    // use your location object
+                    // get latitude , longitude and other info from this
+                    longitude = location.longitude
+                    latitude = location.latitude
+//                    Log.i("Location", "Location from getLastKnownLocation is $longitude $latitude")
+
+                    cameraPosition = CameraPosition.Builder()
+                        .target(LatLng(latitude, longitude))
+                        .zoom(15f)
+                        .build()
+                    map.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
+                } else {
+                    // "Location is null"
+                    // Request for permission
+                    checkLocationPermission()
+                }
+            }
+    }
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<String>,
@@ -292,34 +309,14 @@ class SelectLocationFragment : BaseFragment(), ActivityCompat.OnRequestPermissio
                             Manifest.permission.ACCESS_FINE_LOCATION
                         ) == PackageManager.PERMISSION_GRANTED
                     ) {
-                        fusedLocationProvider?.requestLocationUpdates(
-                            locationRequest,
-                            locationCallback,
-                            Looper.getMainLooper()
-                        )
-
-                        map.isMyLocationEnabled = true
+                        getLastKnownLocation()
                     }
 
                 } else {
-
-                    // permission denied, boo! Disable the
+                    // permission denied! Disable the
                     // functionality that depends on this permission.
                     Toast.makeText(this.requireContext(), R.string.location_required_error, Toast.LENGTH_LONG).show()
 
-                    // Check if we are in a state where the user has denied the permission and
-                    // selected Don't ask again
-                    if (shouldShowRequestPermissionRationale(
-                            Manifest.permission.ACCESS_FINE_LOCATION
-                        )
-                    ) {
-                        startActivity(
-                            Intent(
-                                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                                Uri.fromParts("package", this.requireActivity().packageName, null),
-                            ),
-                        )
-                    }
                 }
                 return
             }

@@ -60,7 +60,7 @@ class SaveReminderViewModelTest {
 
     @Test
     fun shouldReturnError() {
-        datasource = FakeDataSource(null)
+        datasource = FakeDataSource()
         saveReminderViewModel =
             SaveReminderViewModel(ApplicationProvider.getApplicationContext(), datasource)
         reminderData.title = null
